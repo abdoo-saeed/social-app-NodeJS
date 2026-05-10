@@ -1,0 +1,50 @@
+import { NextFunction, Request, Response } from "express"
+import { BadRequestExecption, unAuthorizedExecption } from "../utils/errorHandle/error.handle"
+import { verifyToken } from "../utils/security/token/token"
+import { ACCESS_SIGNATURE } from "../config"
+import { userModel } from "../DB/models/userModel"
+import { get, revokedTokenKey } from "../DB/repo/redis.repo"
+import { IRequest } from "../utils/types/req.types"
+
+
+
+
+
+export const auth  = async (req:IRequest,res:Response,next:NextFunction)=>{
+
+    const {authorization} = req.headers
+    if(!authorization){
+        throw new unAuthorizedExecption
+    }
+
+    const {email,_id,jti,iat} = verifyToken(authorization, ACCESS_SIGNATURE as string) as {
+        email: string,
+        jti: string,
+        iat: number,
+        _id: string
+    }
+
+    const user = await userModel.findById(_id)
+    if(!user || !user.confirmEmail){
+        throw new unAuthorizedExecption()
+    }
+
+    const tokenKey = revokedTokenKey({
+        userId:_id,
+        jti
+        })
+
+    const sessionData = await get({key:tokenKey}) as string
+    if(!sessionData){
+        throw new BadRequestExecption("login again")
+    }
+
+    if(iat*1000 <= user.credential_changedAt?.getTime()){
+        throw new BadRequestExecption("login again")
+    }
+
+    req.user = user 
+    next()
+    
+
+}
