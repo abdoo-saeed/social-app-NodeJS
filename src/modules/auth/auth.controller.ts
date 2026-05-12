@@ -1,10 +1,11 @@
-import { Router, type Router as routerType } from "express";
+import { Response, Router, type Router as routerType } from "express";
 import { authServices } from "./auth.service";
 import { successRes } from "../../utils/types/success.response";
 import { validation } from "../../middlewares/validation.middleware";
-import { confirmEmailSchema, loginSchema, signUpSchema } from "./auth.validation";
+import { confirmEmailSchema, loginSchema, logoutSchema, signUpSchema } from "./auth.validation";
 import { IRequest } from "../../utils/types/req.types";
 import { auth } from "../../middlewares/auth.middleware";
+import { AppError, BadRequestExecption } from "../../utils/errorHandle/error.handle";
 
 
 
@@ -17,7 +18,9 @@ const routes = {
     signup: "/signUp",
     confirmEmail:"/confirm-email",
     login:"/login",
-    profile:"/profile"
+    profile:"/profile",
+    refreshToken:"/refresh-token",
+    logout:"/logout"
 }
 
 
@@ -75,7 +78,7 @@ router.patch(routes.confirmEmail,
 
 router.get(routes.profile,
     auth,
-    (req,res)=>{
+    async(req,res)=>{
         const {user} = req as IRequest
 
         successRes({
@@ -85,5 +88,54 @@ router.get(routes.profile,
 
     }
 )
+
+
+router.post(routes.refreshToken,
+    async (req, res) => {
+
+         
+        const refreshToken = req.headers.authorization
+        // const refreshToken = authHeader?.split(" ")[1]
+
+        // console.log("Extracted Token:", refreshToken)
+        if (!refreshToken) {
+            throw new AppError("there is no refresh token")
+        }
+
+        try {
+            const { data } = await authServices.refreshToken(refreshToken)
+            return successRes({ res, data })
+        } catch (error: any) {
+           throw new BadRequestExecption("error with decoded")
+        }
+    }
+)
+
+
+
+
+router.patch(routes.logout,
+    auth,
+    validation(logoutSchema),
+    async(req:IRequest,res:Response)=>{
+        const {flag} = req.body
+
+        const {data}= await authServices.logoutService({
+            user:req.user!,
+            iat:req.decoded!.iat,
+            jti:req.decoded!.jti,
+            flag
+        })
+
+        successRes({res,data})
+    }
+)
+
+
+
+
+
+
+
 
 export default router

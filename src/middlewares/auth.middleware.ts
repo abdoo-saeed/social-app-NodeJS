@@ -35,15 +35,16 @@ export const auth  = async (req:IRequest,res:Response,next:NextFunction)=>{
         })
 
     const sessionData = await get({key:tokenKey}) as string
-    if(!sessionData){
-        throw new BadRequestExecption("login again")
+    if(sessionData){
+        throw new BadRequestExecption("login again,session")
     }
 
     if(iat*1000 <= user.credential_changedAt?.getTime()){
-        throw new BadRequestExecption("login again")
+        throw new BadRequestExecption("login again,credentials")
     }
 
     req.user = user 
+    req.decoded = { iat, jti, _id }
     next()
     
 

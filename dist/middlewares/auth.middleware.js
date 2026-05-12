@@ -21,13 +21,14 @@ const auth = async (req, res, next) => {
         jti
     });
     const sessionData = await (0, redis_repo_1.get)({ key: tokenKey });
-    if (!sessionData) {
-        throw new error_handle_1.BadRequestExecption("login again");
+    if (sessionData) {
+        throw new error_handle_1.BadRequestExecption("login again,session");
     }
     if (iat * 1000 <= user.credential_changedAt?.getTime()) {
-        throw new error_handle_1.BadRequestExecption("login again");
+        throw new error_handle_1.BadRequestExecption("login again,credentials");
     }
     req.user = user;
+    req.decoded = { iat, jti, _id };
     next();
 };
 exports.auth = auth;

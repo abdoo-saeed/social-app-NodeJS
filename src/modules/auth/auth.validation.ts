@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { logout } from "../../DB/Enums/user.enum";
 
 
  export const signUpSchema= {
@@ -46,3 +47,13 @@ import { z } from "zod";
     ),
   }),
 };
+
+
+
+
+
+export const logoutSchema = {
+  body: z.object({
+    flag: z.enum(Object.values(logout) as [string, ...string[]])
+  })
+}

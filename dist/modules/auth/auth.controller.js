@@ -6,13 +6,16 @@ const success_response_1 = require("../../utils/types/success.response");
 const validation_middleware_1 = require("../../middlewares/validation.middleware");
 const auth_validation_1 = require("./auth.validation");
 const auth_middleware_1 = require("../../middlewares/auth.middleware");
+const error_handle_1 = require("../../utils/errorHandle/error.handle");
 const router = (0, express_1.Router)();
 const routes = {
     // base: "/auth",
     signup: "/signUp",
     confirmEmail: "/confirm-email",
     login: "/login",
-    profile: "/profile"
+    profile: "/profile",
+    refreshToken: "/refresh-token",
+    logout: "/logout"
 };
 router.post(routes.signup, (0, validation_middleware_1.validation)(auth_validation_1.signUpSchema), async (req, res, next) => {
     const { email, password, gender, age, phone, name } = req.body;
@@ -39,11 +42,36 @@ router.patch(routes.confirmEmail, (0, validation_middleware_1.validation)(auth_v
         data
     });
 });
-router.get(routes.profile, auth_middleware_1.auth, (req, res) => {
+router.get(routes.profile, auth_middleware_1.auth, async (req, res) => {
     const { user } = req;
     (0, success_response_1.successRes)({
         res,
         data: { user }
     });
+});
+router.post(routes.refreshToken, async (req, res) => {
+    const refreshToken = req.headers.authorization;
+    // const refreshToken = authHeader?.split(" ")[1]
+    // console.log("Extracted Token:", refreshToken)
+    if (!refreshToken) {
+        throw new error_handle_1.AppError("there is no refresh token");
+    }
+    try {
+        const { data } = await auth_service_1.authServices.refreshToken(refreshToken);
+        return (0, success_response_1.successRes)({ res, data });
+    }
+    catch (error) {
+        throw new error_handle_1.BadRequestExecption("error with decoded");
+    }
+});
+router.patch(routes.logout, auth_middleware_1.auth, (0, validation_middleware_1.validation)(auth_validation_1.logoutSchema), async (req, res) => {
+    const { flag } = req.body;
+    const { data } = await auth_service_1.authServices.logoutService({
+        user: req.user,
+        iat: req.decoded.iat,
+        jti: req.decoded.jti,
+        flag
+    });
+    (0, success_response_1.successRes)({ res, data });
 });
 exports.default = router;

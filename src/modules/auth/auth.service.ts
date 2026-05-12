@@ -2,13 +2,14 @@ import { deletByKey, get, getTtl, revokedTokenKey, set, update , confirmEmailKey
 import {  BadRequestExecption, NotFoundExecption } from "../../utils/errorHandle/error.handle"
 import { generateEncryption } from "../../utils/security/encryption/encryption"
 import {  compare, hash } from "../../utils/security/hash/hash"
-import { confirmDTO, loginDTO, SignUpDTO } from "./auth.dto"
+import { confirmDTO, HUser, loginDTO, SignUpDTO } from "./auth.dto"
 import { UserRepo } from "./user.repo"
 import { createOtp } from "../../utils/email/createOTP"
 import { emailEvent } from "../../utils/email/emailEvents"
-import { createToken } from './../../utils/security/token/token';
+import { createToken, decodeToken } from './../../utils/security/token/token';
 import { randomUUID } from "crypto"
 import { ACCESS_SIGNATURE, REFRESH_SIGNATURE } from "../../config"
+import { logout, Logout} from "../../DB/Enums/user.enum"
 
 
 
@@ -159,15 +160,15 @@ async login({email,password}:loginDTO){
   })
 
 
-  const tokenKey = revokedTokenKey({
-    userId:user._id.toString(),
-    jti
-  })
-  await set({
-    key:tokenKey,
-    value:jti,
-    ttl:7*24*60*60
-  })
+  // const tokenKey = revokedTokenKey({
+  //   userId:user._id.toString(),
+  //   jti
+  // })
+  // await set({
+  //   key:tokenKey,
+  //   value:jti,
+  //   ttl:7*24*60*60
+  // })
 
   return {
     data:{
@@ -181,6 +182,60 @@ async login({email,password}:loginDTO){
 
 }
 
+///////////
+
+async refreshToken(refreshToken: string) {
+    const decoded = decodeToken(refreshToken) as { _id: string; [key: string]: any }
+    
+    const accessToken = createToken(
+        { _id: decoded._id },
+        ACCESS_SIGNATURE,
+        { expiresIn: 30 * 60 }
+    )
+    
+    return {
+        data: {
+            accessToken
+        }
+    }
+}
+
+
+
+///////////////
+
+
+
+async logoutService({user,iat,jti,flag = logout.all}:{user:HUser,iat:number,jti:string,flag?:Logout}){
+
+    if(flag==logout.all){
+        user.credential_changedAt = new Date()
+        await user.save()
+
+    }else{   //only this device
+       
+        const tokenKey = revokedTokenKey({
+                userId:user._id.toString(),
+                jti
+              })
+          const r=  await set({
+                   key:tokenKey,
+                   value:jti,
+                   ttl:7*24*60*60
+                  })
+
+                  console.log(r);
+                  
+    }
+
+
+    return {
+        data:{}
+    }
+}
+
+
+
 
 
 
@@ -192,35 +247,5 @@ async login({email,password}:loginDTO){
 
 
 export  const authServices = new AuthService()
-
-
-
-
-// export const login = async(body:loginDTO)=>{
-
-//     const user = new UserRepo()
-//     const result = await user.findByEmail(body.email)
-    
-//     if(!result){
-//        throw new AppError("invalid credintials")
-//     }
-
-//     // if(!(user.provider==provider.system)){
-//     //     throw new AppError("use google login")
-//     // }
-
-    
-//     if(!(await compare( body.password ,result.password))){
-//         throw new AppError("invalid credintials!")
-//     }
-
-
-//     return{
-//         data:{
-
-//         }
-
-//     }
-// }
 
 

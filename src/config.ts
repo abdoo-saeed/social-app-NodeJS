@@ -18,4 +18,4 @@ export const EMAIL_PASSWORD=process.env.EMAIL_PASSWORD
 
 //token
 export const ACCESS_SIGNATURE=process.env.ACCESS_SIGNATURE as string
-export const REFRESH_SIGNATURE=process.env.REFRESH_SIGNATURE
+export const REFRESH_SIGNATURE=process.env.REFRESH_SIGNATURE as string

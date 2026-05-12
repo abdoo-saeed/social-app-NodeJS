@@ -11,6 +11,7 @@ const emailEvents_1 = require("../../utils/email/emailEvents");
 const token_1 = require("./../../utils/security/token/token");
 const crypto_1 = require("crypto");
 const config_1 = require("../../config");
+const user_enum_1 = require("../../DB/Enums/user.enum");
 class AuthService {
     userRepo = new user_repo_1.UserRepo();
     OTP_TTL = 300;
@@ -107,15 +108,15 @@ class AuthService {
             expiresIn: "7D",
             jwtid: jti
         });
-        const tokenKey = (0, redis_repo_1.revokedTokenKey)({
-            userId: user._id.toString(),
-            jti
-        });
-        await (0, redis_repo_1.set)({
-            key: tokenKey,
-            value: jti,
-            ttl: 7 * 24 * 60 * 60
-        });
+        // const tokenKey = revokedTokenKey({
+        //   userId:user._id.toString(),
+        //   jti
+        // })
+        // await set({
+        //   key:tokenKey,
+        //   value:jti,
+        //   ttl:7*24*60*60
+        // })
         return {
             data: {
                 accessToken,
@@ -123,22 +124,37 @@ class AuthService {
             }
         };
     }
+    ///////////
+    async refreshToken(refreshToken) {
+        const decoded = (0, token_1.decodeToken)(refreshToken);
+        const accessToken = (0, token_1.createToken)({ _id: decoded._id }, config_1.ACCESS_SIGNATURE, { expiresIn: 30 * 60 });
+        return {
+            data: {
+                accessToken
+            }
+        };
+    }
+    ///////////////
+    async logoutService({ user, iat, jti, flag = user_enum_1.logout.all }) {
+        if (flag == user_enum_1.logout.all) {
+            user.credential_changedAt = new Date();
+            await user.save();
+        }
+        else { //only this device
+            const tokenKey = (0, redis_repo_1.revokedTokenKey)({
+                userId: user._id.toString(),
+                jti
+            });
+            const r = await (0, redis_repo_1.set)({
+                key: tokenKey,
+                value: jti,
+                ttl: 7 * 24 * 60 * 60
+            });
+            console.log(r);
+        }
+        return {
+            data: {}
+        };
+    }
 }
 exports.authServices = new AuthService();
-// export const login = async(body:loginDTO)=>{
-//     const user = new UserRepo()
-//     const result = await user.findByEmail(body.email)
-//     if(!result){
-//        throw new AppError("invalid credintials")
-//     }
-//     // if(!(user.provider==provider.system)){
-//     //     throw new AppError("use google login")
-//     // }
-//     if(!(await compare( body.password ,result.password))){
-//         throw new AppError("invalid credintials!")
-//     }
-//     return{
-//         data:{
-//         }
-//     }
-// }

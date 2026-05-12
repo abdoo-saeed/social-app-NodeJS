@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.loginSchema = exports.confirmEmailSchema = exports.signUpSchema = void 0;
+exports.logoutSchema = exports.loginSchema = exports.confirmEmailSchema = exports.signUpSchema = void 0;
 const zod_1 = require("zod");
+const user_enum_1 = require("../../DB/Enums/user.enum");
 exports.signUpSchema = {
     body: zod_1.z.object({
         name: zod_1.z.string().min(3).max(15),
@@ -35,4 +36,9 @@ exports.loginSchema = {
         email: zod_1.z.string().email(),
         password: zod_1.z.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[@#!_%^&*])(?=.*[0-9])(?!.*\s).{8,}$/, "Invalid password format"),
     }),
+};
+exports.logoutSchema = {
+    body: zod_1.z.object({
+        flag: zod_1.z.enum(Object.values(user_enum_1.logout))
+    })
 };
