@@ -122,3 +122,29 @@ export const getKeyByPrefix = async (prefix:string)=>{
          return undefined    
     }
 }
+
+
+
+function FCM_key(userId:string | Types.ObjectId) {
+    return `user:FCM:${userId.toString()}`;
+}
+export async function addFCM(userId:string | Types.ObjectId, FCMToken:string) {
+    return await redisClient.sAdd(FCM_key(userId), FCMToken);
+}
+
+export async function removeFCM(userId:string | Types.ObjectId, FCMToken:string) {
+    return await redisClient.sRem(FCM_key(userId), FCMToken);
+}
+
+export async function getFCMs(userId:string | Types.ObjectId) {
+    return await redisClient.sMembers(FCM_key(userId));
+}
+
+export async function hasFCMs(userId:string | Types.ObjectId) {
+    return await redisClient.sCard(FCM_key(userId));
+}
+
+export async function removeFCMUser(userId:string | Types.ObjectId) {
+    return await redisClient.del(FCM_key(userId));
+}
+

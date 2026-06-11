@@ -6,6 +6,12 @@ const validation = (schema) => {
     return (req, res, next) => {
         const keys = Object.keys(schema);
         const validationErrors = [];
+        if (req.files) {
+            req.body.files = req.files;
+        }
+        if (req.file) {
+            req.body.file = req.file;
+        }
         //iterate  if it body or query or param
         keys.map(key => {
             if (schema[key]) {

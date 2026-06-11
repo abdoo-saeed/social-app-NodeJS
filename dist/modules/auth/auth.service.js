@@ -5,19 +5,21 @@ const redis_repo_1 = require("../../DB/repo/redis.repo");
 const error_handle_1 = require("../../utils/errorHandle/error.handle");
 const encryption_1 = require("../../utils/security/encryption/encryption");
 const hash_1 = require("../../utils/security/hash/hash");
-const user_repo_1 = require("./user.repo");
+const repo_1 = require("../../DB/repo");
 const createOTP_1 = require("../../utils/email/createOTP");
 const emailEvents_1 = require("../../utils/email/emailEvents");
 const token_1 = require("./../../utils/security/token/token");
 const crypto_1 = require("crypto");
 const config_1 = require("../../config");
 const user_enum_1 = require("../../DB/Enums/user.enum");
+const notification_service_1 = require("../../utils/notification/notification.service");
 class AuthService {
-    userRepo = new user_repo_1.UserRepo();
+    userRepo = new repo_1.UserRepo();
     OTP_TTL = 300;
     OTP_MAX_ATTEMPTS = 5;
+    constructor() { }
     async signUp(body) {
-        const { email, gender, name, password, age, phone } = body;
+        const { email, gender, firstName, lastName, password, age, phone } = body;
         const isEmailExist = await this.userRepo.findByEmail(email);
         if (isEmailExist) {
             throw new error_handle_1.BadRequestExecption("email already exist");
@@ -28,7 +30,8 @@ class AuthService {
             encryptedPhone = await (0, encryption_1.generateEncryption)(phone);
         }
         const user = await this.userRepo.create({
-            name,
+            firstName,
+            lastName,
             email,
             password: hashedPass,
             phone: encryptedPhone,
@@ -40,7 +43,7 @@ class AuthService {
             key: (0, redis_repo_1.confirmEmailKeyPrefix)({ userId: user._id }),
             value: JSON.stringify({
                 otp: await (0, hash_1.hash)(otp),
-                attempts: 3
+                attempts: this.OTP_MAX_ATTEMPTS
             }),
             ttl: this.OTP_TTL
         });
@@ -84,8 +87,8 @@ class AuthService {
             data: "confirmation done"
         };
     }
-    ////////
-    async login({ email, password }) {
+    /////////////
+    async login({ email, password, FCM }) {
         const user = await this.userRepo.findByEmail(email);
         if (!user || !await (0, hash_1.compare)(password, user.password)) {
             throw new error_handle_1.BadRequestExecption("in-valid credintials");
@@ -117,6 +120,13 @@ class AuthService {
         //   value:jti,
         //   ttl:7*24*60*60
         // })
+        if (FCM) {
+            await (0, redis_repo_1.addFCM)(user._id, FCM);
+            const tokens = await (0, redis_repo_1.getFCMs)(user._id);
+            if (tokens?.length) {
+                await notification_service_1.notify.sendNotifications({ tokens, data: { title: "login", body: `you login at  ${new Date()}` } });
+            }
+        }
         return {
             data: {
                 accessToken,

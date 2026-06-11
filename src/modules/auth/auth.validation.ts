@@ -4,7 +4,8 @@ import { logout } from "../../DB/Enums/user.enum";
 
  export const signUpSchema= {
  body:  z.object({
-    name: z.string().min(3).max(15),
+    firstName: z.string().min(3).max(15),
+    lastName: z.string().min(3).max(15),
     email: z.email(),
     password: z.string().regex(
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*[@#!_%^&*])(?=.*[0-9])(?!.*\s).{8,}$/),
@@ -45,6 +46,7 @@ import { logout } from "../../DB/Enums/user.enum";
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*[@#!_%^&*])(?=.*[0-9])(?!.*\s).{8,}$/,
       "Invalid password format"
     ),
+    FCM:z.string().optional()
   }),
 };
 

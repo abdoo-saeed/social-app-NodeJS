@@ -37,11 +37,17 @@ exports.userModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const user_enum_1 = require("./../Enums/user.enum");
 const userSchema = new mongoose_1.Schema({
-    name: {
+    firstName: {
         type: String,
         required: true,
-        minlength: 3,
-        maxlength: 50,
+        minlength: 2,
+        maxlength: 25,
+    },
+    lastName: {
+        type: String,
+        required: true,
+        minlength: 2,
+        maxlength: 25,
     },
     email: {
         type: String,
@@ -62,6 +68,17 @@ const userSchema = new mongoose_1.Schema({
         type: Number,
         default: user_enum_1.Gender.male,
         enum: [user_enum_1.Gender.male, user_enum_1.Gender.female]
+    },
+    profileImage: {
+        public_id: String,
+        secure_url: String
+    },
+    coverImage: [{
+            public_id: String,
+            secure_url: String
+        }],
+    FCM_token: {
+        type: String
     },
     confirmEmail: {
         type: Boolean,
@@ -94,14 +111,21 @@ const userSchema = new mongoose_1.Schema({
     validateBeforeSave: true,
     optimisticConcurrency: true,
 });
-// userSchema
-//   .virtual("username")
-//   .set(function (this: UserDocument, value: string) {
-//     const [firstName, lastName] = value.split(" ");
-//     this.set("firstName", firstName);
-//     this.set("lastName", lastName);
-//   })
-//   .get(function (this: UserDocument) {
-//     return `${this.firstName} ${this.lastName}`;
-//   });
+userSchema
+    .virtual("name")
+    .set(function (value) {
+    const parts = value.trim().split(" ");
+    this.firstName = parts[0] ?? "";
+    this.lastName = parts.slice(1).join(" ") ?? "";
+})
+    .get(function () {
+    return `${this.firstName} ${this.lastName}`;
+});
+// model middleware
+// userSchema.pre("insertMany",function(docs){
+//     console.log(this,docs);
+// })
+// userSchema.post("insertMany",async function(docs,next){
+//     console.log(this,docs);
+// })
 exports.userModel = mongoose_1.default.models.User || (0, mongoose_1.model)("User", userSchema);

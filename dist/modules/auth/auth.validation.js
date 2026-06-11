@@ -5,7 +5,8 @@ const zod_1 = require("zod");
 const user_enum_1 = require("../../DB/Enums/user.enum");
 exports.signUpSchema = {
     body: zod_1.z.object({
-        name: zod_1.z.string().min(3).max(15),
+        firstName: zod_1.z.string().min(3).max(15),
+        lastName: zod_1.z.string().min(3).max(15),
         email: zod_1.z.email(),
         password: zod_1.z.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[@#!_%^&*])(?=.*[0-9])(?!.*\s).{8,}$/),
         repeatPassword: zod_1.z.string().optional(),
@@ -35,6 +36,7 @@ exports.loginSchema = {
     body: zod_1.z.object({
         email: zod_1.z.string().email(),
         password: zod_1.z.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[@#!_%^&*])(?=.*[0-9])(?!.*\s).{8,}$/, "Invalid password format"),
+        FCM: zod_1.z.string().optional()
     }),
 };
 exports.logoutSchema = {

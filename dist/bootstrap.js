@@ -10,20 +10,34 @@ const auth_controller_1 = __importDefault(require("./modules/auth/auth.controlle
 const error_handle_1 = require("./utils/errorHandle/error.handle");
 const db_connection_1 = require("./DB/db.connection");
 const redis_connection_1 = require("./DB/redis.connection");
+const user_controller_1 = __importDefault(require("./modules/user/user.controller"));
+const post_controller_1 = __importDefault(require("./modules/post/post.controller"));
 const app = (0, express_1.default)();
 const bootstrap = async () => {
     app.use(express_1.default.json());
     await (0, db_connection_1.DBConnection)();
     await (0, redis_connection_1.testRedisConnection)();
     app.use("/auth", auth_controller_1.default);
+    app.use("/user", user_controller_1.default);
+    app.use("/post", post_controller_1.default);
+    // try {
+    //     const userrepo = new UserRepo()
+    //     const user = await userrepo.inserMany({data:[{username:"abdo saeed", email:`${Date.now()}`,password:"Strong#1"}]})
+    // } catch (error) {
+    // }
     app.all("/*dummy", (req, res) => {
         throw new error_handle_1.NotFoundExecption("page not found");
     });
     app.use((err, req, res, next) => {
+        if (err.name == "MulterError") {
+            err.statusCode = 400;
+        }
         const errData = {
             errMsg: err.message,
+            cause: err.cause,
             statusCode: err.statusCode || 500,
-            stack: err.stack
+            stack: err.stack,
+            err
         };
         if (err.validationError?.length) {
             Object.assign(errData, { validationError: err.validationError });

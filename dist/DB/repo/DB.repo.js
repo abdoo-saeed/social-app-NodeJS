@@ -10,7 +10,7 @@ class DBRepo {
         const doc = await this.model.findById(id, projection, options);
         return doc;
     }
-    async find(filter, projection, options) {
+    async find({ filter, projection, options, }) {
         const docs = await this.model.find(filter, projection, options);
         return docs;
     }
@@ -19,7 +19,10 @@ class DBRepo {
         return doc;
     }
     async create(data) {
-        return this.model.create(data);
+        return this.model.create(data); // ← cast
+    }
+    async inserMany({ data, }) {
+        return this.model.insertMany(data);
     }
     async createMany(data) {
         return this.model.create(data);
@@ -40,7 +43,7 @@ class DBRepo {
         const docs = await this.model.findByIdAndUpdate(id, update, options);
         return docs;
     }
-    async deleteOne(filter, options) {
+    async deleteOne({ filter, options, }) {
         const result = await this.model.deleteOne(filter, options);
         return result;
     }

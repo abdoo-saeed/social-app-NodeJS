@@ -19,3 +19,14 @@ export const EMAIL_PASSWORD=process.env.EMAIL_PASSWORD
 //token
 export const ACCESS_SIGNATURE=process.env.ACCESS_SIGNATURE as string
 export const REFRESH_SIGNATURE=process.env.REFRESH_SIGNATURE as string
+
+
+//cloudinary
+export const CLOUD_NAME=process.env.CLOUD_NAME as string
+export const API_KEY=process.env.API_KEY as string
+export const API_SECRET=process.env.API_SECRET as string
+
+
+
+//application name
+export const APPLICATION_NAME=process.env.APPLICATION_NAME as string

@@ -11,6 +11,7 @@ import {
   UpdateWriteOpResult,
 } from "mongoose";
 
+type DeleteOneOptions<T> = Parameters<Model<T>["deleteOne"]>[1];
 
 export class DBRepo<TDocument> {
   constructor(private model: Model<TDocument>) {}
@@ -24,14 +25,24 @@ export class DBRepo<TDocument> {
     return doc;
   }
 
-  async find(
-    filter: QueryFilter<TDocument>,
-    projection?: ProjectionType<TDocument>,
-    options?: QueryOptions,
-  ): Promise<HydratedDocument<TDocument>[] | []> {
-    const docs = await this.model.find(filter, projection, options);
-    return docs;
-  }
+async find({
+  filter,
+  projection,
+  options,
+}: {
+  filter: QueryFilter<TDocument>;
+  projection?: ProjectionType<TDocument>;
+  options?: QueryOptions;
+}): Promise<HydratedDocument<TDocument>[] | []> {
+
+  const docs = await this.model.find(
+    filter,
+    projection,
+    options
+  );
+
+  return docs;
+}
 
   async findOne(
     filter: QueryFilter<TDocument>,
@@ -43,12 +54,20 @@ export class DBRepo<TDocument> {
   }
 
  
-  async create(data:Partial<TDocument>):Promise<HydratedDocument<TDocument>>{
-    return this.model.create(data)
+async create(data: Partial<TDocument>): Promise<HydratedDocument<TDocument>> {
+    return this.model.create(data) as Promise<HydratedDocument<TDocument>>  // ← cast
+}
+
+  async inserMany({data,}:{data:Partial<TDocument>[]}):Promise<HydratedDocument<TDocument>[]>{
+    return this.model.insertMany(data) as Promise<HydratedDocument<TDocument>[]>;
   }
+
+
   async createMany(data:Partial<TDocument>[]):Promise<HydratedDocument<TDocument>[]>{
     return this.model.create(data)
   }
+
+
 
   async updateOne(
     filter: QueryFilter<TDocument>,
@@ -88,13 +107,17 @@ export class DBRepo<TDocument> {
 
 
 
-  async deleteOne(
-    filter: QueryFilter<TDocument>,
-    options?: Parameters<typeof this.model.deleteOne>[1],
-  ): Promise<DeleteResult> {
-    const result = await this.model.deleteOne(filter, options);
-    return result;
-  }
+async deleteOne({
+  filter,
+  options,
+}: {
+  filter: QueryFilter<TDocument>;
+  options?: DeleteOneOptions<TDocument>;
+}): Promise<DeleteResult> {
+  const result = await this.model.deleteOne(filter, options);
+
+  return result;
+}
 
   async deleteMany(
     filter: QueryFilter<TDocument>,

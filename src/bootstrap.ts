@@ -5,6 +5,10 @@ import { IAppError } from "./utils/types/error";
 import { NotFoundExecption } from "./utils/errorHandle/error.handle";
 import{ DBConnection} from "./DB/db.connection"
 import { testRedisConnection } from "./DB/redis.connection";
+import userRouter from "./modules/user/user.controller";
+import postRepo from "./modules/post/post.controller";
+import { resolve } from "path";
+
 
 
 const app:Express = express()
@@ -18,10 +22,17 @@ await testRedisConnection()
 
 
     app.use("/auth",authRouter)
+    app.use("/user",userRouter)
+    app.use("/post",postRepo)
 
 
 
-
+    // try {
+    //     const userrepo = new UserRepo()
+    //     const user = await userrepo.inserMany({data:[{username:"abdo saeed", email:`${Date.now()}`,password:"Strong#1"}]})
+    // } catch (error) {
+        
+    // }
 
 
 
@@ -34,10 +45,16 @@ await testRedisConnection()
      
     app.use((err:IAppError,req:Request,res:Response,next:NextFunction)=>{
 
+        if(err.name=="MulterError"){
+            err.statusCode=400
+        }
+
         const errData ={
             errMsg:err.message,
+            cause:err.cause,
             statusCode:err.statusCode || 500,
-            stack:err.stack
+            stack:err.stack,
+            err
         }
 
         if(err.validationError?.length){

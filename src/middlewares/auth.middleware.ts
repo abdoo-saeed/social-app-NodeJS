@@ -12,12 +12,13 @@ import { IRequest } from "../utils/types/req.types"
 
 export const auth  = async (req:IRequest,res:Response,next:NextFunction)=>{
 
-    const {authorization} = req.headers
-    if(!authorization){
-        throw new unAuthorizedExecption
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.split(" ")[1];
+      if (!token) {
+        throw new unAuthorizedExecption("token not correct");
     }
 
-    const {email,_id,jti,iat} = verifyToken(authorization, ACCESS_SIGNATURE as string) as {
+    const {email,_id,jti,iat} = verifyToken(token, ACCESS_SIGNATURE as string) as {
         email: string,
         jti: string,
         iat: number,
@@ -26,7 +27,7 @@ export const auth  = async (req:IRequest,res:Response,next:NextFunction)=>{
 
     const user = await userModel.findById(_id)
     if(!user || !user.confirmEmail){
-        throw new unAuthorizedExecption()
+        throw new unAuthorizedExecption("user not found")
     }
 
     const tokenKey = revokedTokenKey({
@@ -36,11 +37,11 @@ export const auth  = async (req:IRequest,res:Response,next:NextFunction)=>{
 
     const sessionData = await get({key:tokenKey}) as string
     if(sessionData){
-        throw new BadRequestExecption("login again,session")
+        throw new BadRequestExecption("login again,session!!")
     }
 
     if(iat*1000 <= user.credential_changedAt?.getTime()){
-        throw new BadRequestExecption("login again,credentials")
+        throw new BadRequestExecption("login again,credentials!!")
     }
 
     req.user = user 

@@ -30,8 +30,8 @@ router.post(routes.signup,
     validation(signUpSchema),
     async(req,res,next)=>{
 
-        const {email,password,gender,age,phone,name} = req.body 
-        const {data} = await authServices.signUp({email,password,gender,age,phone,name})
+        const {email,password,gender,age,phone,firstName,lastName} = req.body 
+        const {data} = await authServices.signUp({email,password,gender,age,phone,firstName,lastName})
 
        return successRes({
         res,
@@ -74,28 +74,12 @@ router.patch(routes.confirmEmail,
 
 
 
-
-
-router.get(routes.profile,
-    auth,
-    async(req,res)=>{
-        const {user} = req as IRequest
-
-        successRes({
-            res,
-            data:{user}
-        })
-
-    }
-)
-
-
 router.post(routes.refreshToken,
     async (req, res) => {
 
          
-        const refreshToken = req.headers.authorization
-        // const refreshToken = authHeader?.split(" ")[1]
+     const authHeader = req.headers.authorization;
+     const refreshToken = authHeader?.split(" ")[1];
 
         // console.log("Extracted Token:", refreshToken)
         if (!refreshToken) {

@@ -18,8 +18,8 @@ const routes = {
     logout: "/logout"
 };
 router.post(routes.signup, (0, validation_middleware_1.validation)(auth_validation_1.signUpSchema), async (req, res, next) => {
-    const { email, password, gender, age, phone, name } = req.body;
-    const { data } = await auth_service_1.authServices.signUp({ email, password, gender, age, phone, name });
+    const { email, password, gender, age, phone, firstName, lastName } = req.body;
+    const { data } = await auth_service_1.authServices.signUp({ email, password, gender, age, phone, firstName, lastName });
     return (0, success_response_1.successRes)({
         res,
         data
@@ -42,16 +42,9 @@ router.patch(routes.confirmEmail, (0, validation_middleware_1.validation)(auth_v
         data
     });
 });
-router.get(routes.profile, auth_middleware_1.auth, async (req, res) => {
-    const { user } = req;
-    (0, success_response_1.successRes)({
-        res,
-        data: { user }
-    });
-});
 router.post(routes.refreshToken, async (req, res) => {
-    const refreshToken = req.headers.authorization;
-    // const refreshToken = authHeader?.split(" ")[1]
+    const authHeader = req.headers.authorization;
+    const refreshToken = authHeader?.split(" ")[1];
     // console.log("Extracted Token:", refreshToken)
     if (!refreshToken) {
         throw new error_handle_1.AppError("there is no refresh token");

@@ -3,13 +3,17 @@ import { Gender, provider, Provider } from './../Enums/user.enum';
 
 
 export interface IUser {
-  name:string;
+  firstName:string;
+  lastName: string;
   email: string;
   password: string;
   gender: Gender;
   confirmEmail: boolean;
   age?: number;
   phone?: string;
+  FCM_token?: string;
+  profileImage?:{public_id:string,secure_url:string}
+  coverImage?:{public_id:string,secure_url:string}[];
   credential_changedAt: Date;
   isDeleted: boolean;
   provider:Provider;
@@ -18,14 +22,22 @@ export interface IUser {
 }
 
 
+
+
 const userSchema = new Schema<IUser>(
   {
 
-    name: {
+    firstName: {
       type: String,
       required: true,
-      minlength: 3,
-      maxlength: 50,
+      minlength: 2,
+      maxlength: 25,
+    },
+    lastName: {
+      type: String,
+      required: true,
+      minlength: 2,
+      maxlength: 25,
     },
     email: {
       type: String,
@@ -46,6 +58,17 @@ const userSchema = new Schema<IUser>(
       type: Number,
       default: Gender.male,
       enum: [Gender.male,Gender.female]
+    },
+    profileImage: {
+      public_id:String,
+      secure_url:String
+    },
+    coverImage:[ {
+     public_id:String,
+     secure_url:String
+    }],
+    FCM_token: {
+    type: String
     },
     confirmEmail: {
       type: Boolean,
@@ -84,16 +107,35 @@ const userSchema = new Schema<IUser>(
 );
 
 
-// userSchema
-//   .virtual("username")
-//   .set(function (this: UserDocument, value: string) {
-//     const [firstName, lastName] = value.split(" ");
-//     this.set("firstName", firstName);
-//     this.set("lastName", lastName);
-//   })
-//   .get(function (this: UserDocument) {
-//     return `${this.firstName} ${this.lastName}`;
-//   });
+userSchema
+  .virtual("name")
+  .set(function (this: IUser, value: string) {
+    const parts = value.trim().split(" ");
+    this.firstName = parts[0] ?? "";
+    this.lastName = parts.slice(1).join(" ") ?? "";
+  })
+  .get(function (this: IUser) {
+    return `${this.firstName} ${this.lastName}`;
+  });
+
+
+
+
+
+
+// model middleware
+  // userSchema.pre("insertMany",function(docs){
+  //     console.log(this,docs);
+  // })
+  // userSchema.post("insertMany",async function(docs,next){
+  //     console.log(this,docs);
+     
+  // })
+
+
+
+
+
 
 
 export const userModel = mongoose.models.User as Model<IUser> || model<IUser>("User", userSchema);

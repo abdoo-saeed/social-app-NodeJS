@@ -1,6 +1,6 @@
 import { ProjectionType, QueryOptions } from "mongoose";
-import { IUser, userModel } from "../../DB/models/userModel";
-import { DBRepo } from "../../DB/repo/DB.repo";
+import { IUser, userModel } from "../models/userModel";
+import { DBRepo } from "./DB.repo";
 import { HydratedDocument } from "mongoose";
 
 

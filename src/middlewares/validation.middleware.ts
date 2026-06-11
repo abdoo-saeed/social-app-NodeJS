@@ -17,6 +17,15 @@ export const validation = (schema:schemaType)=>{
         const keys = Object.keys(schema) as keyType[]
         const validationErrors:$ZodIssue[] = []
 
+        if (req.files) {
+            
+            req.body.files = req.files;
+        }
+        if (req.file) {
+            
+            req.body.file = req.file;
+        }
+
         //iterate  if it body or query or param
         keys.map(key=>{
             if(schema[key]){
@@ -24,6 +33,7 @@ export const validation = (schema:schemaType)=>{
                 if(!validationRes.success){
                     validationErrors.push(...validationRes.error.issues) //return the errors to the array
                 }
+               
             }
         })
 

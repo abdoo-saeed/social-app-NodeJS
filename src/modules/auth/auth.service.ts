@@ -1,15 +1,19 @@
-import { deletByKey, get, getTtl, revokedTokenKey, set, update , confirmEmailKeyPrefix } from "../../DB/repo/redis.repo"
+import { deletByKey, get, getTtl, revokedTokenKey, set, update , confirmEmailKeyPrefix, addFCM, getFCMs } from "../../DB/repo/redis.repo"
 import {  BadRequestExecption, NotFoundExecption } from "../../utils/errorHandle/error.handle"
 import { generateEncryption } from "../../utils/security/encryption/encryption"
 import {  compare, hash } from "../../utils/security/hash/hash"
 import { confirmDTO, HUser, loginDTO, SignUpDTO } from "./auth.dto"
-import { UserRepo } from "./user.repo"
+import { UserRepo } from "../../DB/repo"
 import { createOtp } from "../../utils/email/createOTP"
 import { emailEvent } from "../../utils/email/emailEvents"
 import { createToken, decodeToken } from './../../utils/security/token/token';
 import { randomUUID } from "crypto"
 import { ACCESS_SIGNATURE, REFRESH_SIGNATURE } from "../../config"
 import { logout, Logout} from "../../DB/Enums/user.enum"
+import { notify } from "../../utils/notification/notification.service"
+
+
+
 
 
 
@@ -18,15 +22,17 @@ import { logout, Logout} from "../../DB/Enums/user.enum"
 
  class AuthService{
 
-  private userRepo = new UserRepo()
+  private readonly userRepo = new UserRepo()
+  
   private OTP_TTL = 300
   private OTP_MAX_ATTEMPTS = 5
 
+  constructor(){}
 
 
 
 async signUp(body:SignUpDTO){
-    const {email,gender,name,password,age,phone} = body
+    const {email,gender,firstName,lastName,password,age,phone} = body
      
       const isEmailExist = await this.userRepo.findByEmail(email)
 
@@ -46,7 +52,8 @@ async signUp(body:SignUpDTO){
       
       
       const user = await this.userRepo.create({
-        name,
+        firstName,
+        lastName,
         email,
         password:hashedPass,
         phone:encryptedPhone as string,
@@ -61,7 +68,7 @@ async signUp(body:SignUpDTO){
         key:confirmEmailKeyPrefix({userId:user._id}),
         value: JSON.stringify({
                  otp: await hash(otp),
-                 attempts: 3
+                 attempts: this.OTP_MAX_ATTEMPTS
                 }),
         ttl:this.OTP_TTL
     })
@@ -129,9 +136,9 @@ async confirmEmail({email,otp}:confirmDTO){
 }
 
 
-////////
+/////////////
 
-async login({email,password}:loginDTO){
+async login({email,password,FCM}:loginDTO){
 
   const user = await this.userRepo.findByEmail(email)
 
@@ -141,6 +148,7 @@ async login({email,password}:loginDTO){
   if(!user.confirmEmail){
     throw new BadRequestExecption("email not confirmed yet")
   }
+
 
   const jti = randomUUID()
   const accessToken = createToken({
@@ -169,6 +177,22 @@ async login({email,password}:loginDTO){
   //   value:jti,
   //   ttl:7*24*60*60
   // })
+
+
+  if(FCM){
+
+    await addFCM(user._id,FCM)
+    const tokens = await getFCMs(user._id)
+
+    if(tokens?.length){
+
+      await notify.sendNotifications({tokens,data:{title:"login",body:`you login at  ${new Date()}`}})
+
+    }
+
+    
+
+  }
 
   return {
     data:{
@@ -235,6 +259,7 @@ async logoutService({user,iat,jti,flag = logout.all}:{user:HUser,iat:number,jti:
 }
 
 
+///////////////
 
 
 
