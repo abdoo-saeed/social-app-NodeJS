@@ -10,6 +10,7 @@ import {
   UpdateQuery,
   UpdateWriteOpResult,
 } from "mongoose";
+import { IPaginate } from "../interfaces/paginationInterface";
 
 type DeleteOneOptions<T> = Parameters<Model<T>["deleteOne"]>[1];
 
@@ -31,18 +32,56 @@ async find({
   options,
 }: {
   filter: QueryFilter<TDocument>;
-  projection?: ProjectionType<TDocument>;
-  options?: QueryOptions;
+  projection?: ProjectionType<TDocument> | null | undefined;
+  options?: QueryOptions | undefined;
 }): Promise<HydratedDocument<TDocument>[] | []> {
 
-  const docs = await this.model.find(
+  const docs = this.model.find(
     filter,
     projection,
     options
   );
+  if(options?.skip) docs.skip(options.skip)
+  if(options?.limit) docs.limit(options.limit)
 
-  return docs;
+  return await docs.exec();
 }
+
+
+async paginate({
+  filter,
+  projection,
+  options,
+  page=0,
+  size=5
+}: {
+  filter: QueryFilter<TDocument>;
+  projection?: ProjectionType<TDocument>| null |undefined;
+  options?: QueryOptions<TDocument>;
+  page?:number | string | undefined;
+  size?:number | string | undefined;
+}): Promise<IPaginate<TDocument>> {
+
+  let count:number = -1
+ if(Number(page) > 0){
+  page = parseInt(page as string)
+  size = parseInt(size as string)
+  options ??= {};
+  options.skip = (page - 1) * size;
+  options.limit = size;
+  count = await this.model.countDocuments(filter)
+ }
+
+ const docs = await this.find({filter:filter||{},projection,options})
+
+ return {
+  docs,
+  ...(Number(page)>0 ? {currentPage:page , size , pages:Math.ceil(count/parseInt(size as string))} : {} )
+  
+ }
+
+  
+} 
 
   async findOne(
     filter: QueryFilter<TDocument>,

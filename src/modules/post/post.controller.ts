@@ -6,6 +6,7 @@ import { successRes } from "../../utils/types/success.response";
 import { createPostSchema } from "./post.validation";
 import { postService } from "./post.service";
 import { IRequest } from "../../utils/types/req.types";
+import { paginateDto, paginationValidationSchema } from "../../utils/generalValidations/validation";
 
 
 
@@ -24,6 +25,17 @@ router.post("/post",
     validation(createPostSchema),
     async (req: IRequest, res: Response, next:NextFunction) => {
         const data = await postService.createPost({ ...req.body, files: req.files }, req.user!)
+        return successRes({ res, data, status: 201 })
+    }
+)
+
+
+
+router.get("/",
+    auth,
+    validation(paginationValidationSchema),
+    async (req: IRequest, res: Response, next:NextFunction) => {
+        const data = await postService.postList(req.query as paginateDto ,req.user!)
         return successRes({ res, data, status: 201 })
     }
 )

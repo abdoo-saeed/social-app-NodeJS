@@ -1,4 +1,4 @@
-import mongoose, { Model, Schema, model } from "mongoose";
+import mongoose, { Model, Schema, Types, model } from "mongoose";
 import { Gender, provider, Provider } from './../Enums/user.enum';
 
 
@@ -12,8 +12,10 @@ export interface IUser {
   age?: number;
   phone?: string;
   FCM_token?: string;
-  profileImage?:{public_id:string,secure_url:string}
+  profileImage?:{public_id:string,secure_url:string};
   coverImage?:{public_id:string,secure_url:string}[];
+  friends?: Types.ObjectId[] | IUser[];
+  exceptedFor?:Types.ObjectId[] | IUser[];
   credential_changedAt: Date;
   isDeleted: boolean;
   provider:Provider;
@@ -66,6 +68,12 @@ const userSchema = new Schema<IUser>(
     coverImage:[ {
      public_id:String,
      secure_url:String
+    }],
+    friends:[{
+      type:Types.ObjectId,ref:"user"
+    }],
+    exceptedFor:[{
+      type:Types.ObjectId,ref:"user"
     }],
     FCM_token: {
     type: String
