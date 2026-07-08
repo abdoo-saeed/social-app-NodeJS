@@ -126,10 +126,15 @@ async create(data: Partial<TDocument>): Promise<HydratedDocument<TDocument>> {
     return result;
   }
 
-  async findOneAndUpdate(
+  async findOneAndUpdate({
+    filter,
+    update,
+    options
+  }:{
     filter: QueryFilter<TDocument>,
     update: UpdateQuery<TDocument>,
     options?: MongooseUpdateQueryOptions<TDocument>,
+  }
   ): Promise<HydratedDocument<TDocument> | null> {
     const docs = await this.model.findOneAndUpdate(filter, update, options);
     return docs;

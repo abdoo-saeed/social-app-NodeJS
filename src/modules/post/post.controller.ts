@@ -3,10 +3,11 @@ import { auth } from "../../middlewares/auth.middleware";
 import { cloudFileUploud, fileFieldValidation } from "../../utils/multer";
 import { validation } from "../../middlewares/validation.middleware";
 import { successRes } from "../../utils/types/success.response";
-import { createPostSchema } from "./post.validation";
+import { createPostSchema, reactPost } from "./post.validation";
 import { postService } from "./post.service";
 import { IRequest } from "../../utils/types/req.types";
 import { paginateDto, paginationValidationSchema } from "../../utils/generalValidations/validation";
+import { ReactPostparamDto, ReactPostQueryDto } from "./post.dto";
 
 
 
@@ -31,13 +32,26 @@ router.post("/post",
 
 
 
-router.get("/",
+router.get("/allPosts",
     auth,
     validation(paginationValidationSchema),
     async (req: IRequest, res: Response, next:NextFunction) => {
         const data = await postService.postList(req.query as paginateDto ,req.user!)
         return successRes({ res, data, status: 201 })
     }
+)
+
+
+router.patch("/:postId/react",
+    auth,
+    validation(reactPost),
+    async (req: IRequest, res: Response, next:NextFunction) => {
+        console.log('query:', req.query, 'body:', req.body, 'params:', req.params)
+        const data = await postService.reactPost(req.params as ReactPostparamDto , req.query as unknown as ReactPostQueryDto , req.user!)
+
+        
+        return successRes({ res, data, status: 201 })
+    }   
 )
 
 

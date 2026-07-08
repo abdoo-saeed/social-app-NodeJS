@@ -53,3 +53,20 @@ export const createPostSchema = {
     })
 
 }
+
+
+
+
+
+export const reactPost = {
+    params:z.object({
+        postId:z.string().refine(value => Types.ObjectId.isValid(value), "in-valid objectid")
+    }),
+    query: z.object({
+       react: z.coerce.number()
+    }),
+
+}
+
+
+
