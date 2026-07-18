@@ -2,7 +2,7 @@ import { Types } from "mongoose";
 import { UserRepo } from "../../DB/repo";
 import { BadRequestExecption, NotFoundExecption } from "../../utils/errorHandle/error.handle";
 import { HUser } from "../auth/auth.dto";
-import { createPostDto } from "./post.dto";
+import { createPostDto, ReactPostparamDto, ReactPostQueryDto } from "./post.dto";
 import { PostRepo } from './../../DB/repo/post.repo';
 import { notify } from "../../utils/notification/notification.service";
 import { IPost } from "../../DB/models";
@@ -12,6 +12,7 @@ import { AvalibalityEnum } from "../../DB/Enums/post.enum";
 import { getAvalibality } from "../../utils/postUtilis.ts/post";
 import { paginateDto } from "../../utils/generalValidations/validation";
 import { IPaginate } from "../../DB/interfaces/paginationInterface";
+import { update } from './../../DB/repo/redis.repo';
 
 class PostService {
   private readonly userRepo = new UserRepo();
@@ -108,6 +109,39 @@ class PostService {
 
     return posts;
   }
+
+
+
+  
+
+
+
+
+    async reactPost(
+     {postId}:ReactPostparamDto, {react}:ReactPostQueryDto,
+      user: HUser,
+  ): Promise<IPost> {
+   
+    const post = await this.postRepo.findOneAndUpdate({
+      filter:{
+        _id:postId,
+        $or:getAvalibality(user)
+      },
+      update:{
+        ...(Number(react) > 0 ? {$addToSet:{likes:user._id}} : {$pull:{likes:user._id}} )
+        
+      }
+    })
+
+    if(!post){
+      throw new NotFoundExecption("fail to find post")
+    }
+
+    return post.toJSON()
+
+  }
+
+
 
 
 
